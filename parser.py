@@ -1,5 +1,6 @@
 import requests
 from bs4 import BeautifulSoup
+import csv
 
 url = "https://dungeon.su/spells/"
 basic_url = "https://dungeon.su"
@@ -20,46 +21,48 @@ for spell in spells:
     url = spell.select_one("a")["href"]
     urls.append(basic_url + url)
 
-for url in urls:
-    resp = requests.get(url)
-    html = resp.text
-    parser = BeautifulSoup(html, "html.parser")
+with open("Base.csv", mode="w", encoding='utf-8') as w_file:
 
-    for elements in parser.find_all("li", {'class': 'translate-by'}):
-        elements.decompose()
+    names = ["Name", "Level", "School", "Application time", "Distance", "Components",
+             "Duration", "Classes", "Description"]
 
-    for elements in parser.find_all("strong"):
-        elements.decompose()
+    file_writer = csv.DictWriter(w_file, delimiter=",", fieldnames=names)
+    file_writer.writeheader()
 
-    for elements in parser.find_all("h3"):
-        elements.decompose()
+    for url in urls:
 
-    named = parser.select_one("h2 a.item-link").get_text()
+        resp = requests.get(url)
+        html = resp.text
+        parser = BeautifulSoup(html, "html.parser")
 
-    elements = parser.select("ul.params li")
+        for elements in parser.find_all("li", {'class': 'translate-by'}):
+            elements.decompose()
 
-    all_param = [element.text for element in elements]
+        for elements in parser.find_all("strong"):
+            elements.decompose()
 
-    # print(all_param)
+        for elements in parser.find_all("h3"):
+            elements.decompose()
 
-    print("------------------------")
-    print(named)
-    print("------------------------")
-    level = all_param[0]
-    print("Уровень: ", level)
-    school = all_param[1]
-    print("Школа: ", school)
-    application_time = all_param[2]
-    print("Время накладывания: ", application_time)
-    distance = all_param[3]
-    print("Дистанция: ", distance)
-    components = all_param[4]
-    print("Компоненты: ", components)
-    duration = all_param[5]
-    print("Длительность: ", duration)
-    classes = all_param[6]
-    print("Классы: ", classes)
-    source = all_param[7]
-    # print("Источник: ", source)
-    description = all_param[8]
-    print("Описание: ", description)
+        named = parser.select_one("h2 a.item-link").get_text()
+
+        elements = parser.select("ul.params li")
+
+        all_param = [element.text for element in elements]
+
+        level = all_param[0]
+        school = all_param[1]
+        app_time = all_param[2]
+        distance = all_param[3]
+        components = all_param[4]
+        duration = all_param[5]
+        classes = all_param[6]
+        description = all_param[8]
+
+        file_writer.writerow({"Name": named, "Level": level, "School": school, "Application time": app_time,
+                              "Distance": distance, "Components": components, "Duration": duration,
+                              "Classes": classes, "Description": description})
+
+
+print("Done")
+
